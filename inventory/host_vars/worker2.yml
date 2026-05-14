@@ -1,4 +1,0 @@
----
-ansible_host: <IP_ADDRESS_OR_HOSTNAME>
-ansible_user: <USERNAME>
-ansible_port: <PORT_NUMBER>
