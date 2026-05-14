@@ -1,0 +1,31 @@
+---
+
+- name : Remove existing apt sources list
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/apt/sources.list.d/ubuntu.sources
+    - /etc/apt/sources.list.d/ubuntu.servers
+    - /etc/apt/sources.list.d/debian.servers #cleanup if it is missconfigured
+    - /etc/apt/sources.list.d/debian.sources #cleanup if it is missconfigured
+  when: ansible_distribution == "Ubuntu"
+
+
+- name: Configure Ubuntu mirrors (using Ansible facts)
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list          
+    content: |                           
+      # This file is managed by Ansible. Manual changes will be overwritten.
+      deb http://{{ ubuntu_mirror }} {{ ansible_distribution_release }} main restricted universe multiverse
+      deb http://{{ ubuntu_mirror }} {{ ansible_distribution_release }}-updates main restricted universe multiverse
+      deb http://{{ ubuntu_mirror }} {{ ansible_distribution_release }}-backports main restricted universe multiverse
+      deb http://{{ ubuntu_sec_mirror }} {{ ansible_distribution_release }}-security main restricted universe multiverse
+    owner: root                         
+    group: root                           
+    mode: '0644'                          
+    backup: yes
+    # Validates syntax before overwriting the production file
+    validate: /usr/bin/apt-get update --print-uris -o Dir::Etc::SourceList=%s
+  when: ansible_distribution == "Ubuntu"
+  notify: update apt cache

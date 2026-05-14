@@ -1,0 +1,63 @@
+---
+- name: Install prerequisite packages
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+    state: present
+    update_cache: yes
+
+- name: Create directory for Docker GPG key
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Download Docker GPG key (Ubuntu)
+  ansible.builtin.get_url:
+    url: "{{ ubuntu_docker_gpg }}"
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+  when: ansible_distribution == "Ubuntu"
+
+- name: Download Docker GPG key (Debian)
+  ansible.builtin.get_url:
+    url: "{{ debian_docker_gpg }}"
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+  when: ansible_distribution == "Debian"
+
+- name: Add Docker repository (Ubuntu)
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] http://{{ docker_mirror_ubuntu }} {{ ansible_distribution_release }} stable"
+    filename: docker
+    state: present
+  when: ansible_distribution == "Ubuntu"
+
+- name: Add Docker repository (Debian)
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] http://{{ docker_mirror_debian }} {{ ansible_distribution_release }} stable"
+    filename: docker
+    state: present
+  when: ansible_distribution == "Debian"
+
+- name: Install Docker components
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: yes
+
+- name: Configure Docker Registry Mirror
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "registry-mirrors": ["https://{{ docker_registery }}"]
+      }
+    mode: '0644'
+  notify: restart docker

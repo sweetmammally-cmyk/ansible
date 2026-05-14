@@ -1,0 +1,30 @@
+---
+- name: Bootstrap Server
+  hosts: drservers
+  become: true
+
+  tasks:
+    - name: Updating DNS Servers
+      ansible.builtin.import_tasks: tasks/dns_update.yml
+
+    - name: Set Debian Mirrors
+      ansible.builtin.import_tasks: tasks/set_debian_mirrors.yml
+      when: ansible_distribution == "Debian"
+
+    - name: Set Ubuntu Mirrors
+      ansible.builtin.import_tasks: tasks/set_ubuntu_mirros.yml
+      when: ansible_distribution == "Ubuntu"
+    
+    - name : install docker
+      ansible.builtin.import_tasks: tasks/install_docker.yml
+  handlers:
+    - name: restart systemd-resolved
+      ansible.builtin.service:
+        name: systemd-resolved
+        state: restarted
+        enabled: yes
+
+    - name: update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
