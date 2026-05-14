@@ -15,8 +15,6 @@
       ansible.builtin.import_tasks: tasks/set_ubuntu_mirros.yml
       when: ansible_distribution == "Ubuntu"
     
-    - name : install docker
-      ansible.builtin.import_tasks: tasks/install_docker.yml
   handlers:
     - name: restart systemd-resolved
       ansible.builtin.service:

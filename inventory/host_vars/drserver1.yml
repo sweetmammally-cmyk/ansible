@@ -1,4 +1,4 @@
 ---
-ansible_host: 212.80.24.69
+ansible_host: 46.38.137.186
 ansible_user: root
 ansible_port: 22
