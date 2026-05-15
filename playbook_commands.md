@@ -2,11 +2,11 @@
 
 # How to run a playbook
 ```bash
-ansible-playbook {playbook path} --limit {server name} -i  {path of the yaml file that we defined the servers}
+ansible-playbook {playbook path} --limit {server name} -i  {path of the yaml inventory file or all}
 ```
 
 # Installing a package in playbook for apt task
-```
+```yml
 ---
 - name : Install nginx
   hosts: all
@@ -19,7 +19,7 @@ ansible-playbook {playbook path} --limit {server name} -i  {path of the yaml fil
 ```
 
 # restarting a service , enable , stop and etc
-```
+```yml
 ---
 - name : restarting nginx
   hosts: all
@@ -28,4 +28,4 @@ ansible-playbook {playbook path} --limit {server name} -i  {path of the yaml fil
     state : restarted #for stoping :stoped , for starting : started
     enabled: yes      #for disabling : no ,  
 ```
-you can do everything with combinatiob above 
+you can do everything with combination above 
