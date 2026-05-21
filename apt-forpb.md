@@ -1,4 +1,4 @@
-# adding an pt rippo
+# adding an apt rippo
 ```yml
 ---
 - name: Add Docker repository (Ubuntu)
