@@ -2,7 +2,7 @@
 for ip addreases , mirros , and any thing changes over time 
 We use Variables here
 
-# Instead of
+# Instead of hardcoding alike
 ```yml
 ---
 - name: Set DNS servers
