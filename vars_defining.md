@@ -76,11 +76,11 @@ user:
     password: "bad-practice"
 
 ```
-:::warning
-It is a bad practice , using secrets inside the code
-We should try using secret managers like hashicorp vault
-some providers provide vaults too , I will write some samples about it.
-:::
+> [!WARNING]
+> It is a **bad practice** using secrets inside the code.
+> We should try using secret managers like **HashiCorp Vault**.
+> Some providers offer vaults too — I will write samples about it.
+
 Notice the rows of the Dictionary sample are Strings , since they have "
 
 # Other Vars:
