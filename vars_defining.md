@@ -87,3 +87,28 @@ Notice the rows of the Dictionary sample are Strings , since they have "
 # Ansible python path
 It defines with : ```ansible_python_interpreter: /usr/bin/python3.12```
 
+## Variable Precedence
+
+Variables can be defined in multiple places with different values. Understanding the precedence order helps you predict which value will be used.
+
+> [!WARNING]
+> Variable precedence determines **which definition wins** when the same variable is defined in multiple locations.
+> Lower numbers = lower priority (overwritten by higher numbers).
+
+### Precedence Order (Least to Most Important)
+
+| Priority | Level | Scope | Example |
+|:--------:|-------|-------|---------|
+| 1 | **Default values** | Built-in defaults | `variable "timeout" { default = 30 }` |
+| 2 | **Inventory variables** | Host/group vars | `group_vars/all.yml` |
+| 3 | **Playbook variables** | Play level | `vars:` block in playbook |
+| 4 | **Role defaults** | Role level | `roles/role_name/defaults/main.yml` |
+| 5 | **Role vars** | Role level | `roles/role_name/vars/main.yml` |
+| 6 | **Block variables** | Task block | `block:` with `vars:` |
+| 7 | **Task variables** | Individual task | `vars:` inside a task |
+| 8 | **Include variables** | Dynamic includes | `include_vars:` |
+| 9 | **Set_fact** | Runtime facts | `set_fact:` module |
+| 10 | **Extra vars** | Command line | `ansible-playbook -e "var=value"` |
+
+> [!IMPORTANT]
+> **Highest precedence (10)** : `--extra-vars` or `-e` flags on the command line will **always** override all other definitions.
