@@ -112,3 +112,82 @@ Variables can be defined in multiple places with different values. Understanding
 
 > [!IMPORTANT]
 > **Highest precedence (10)** : `--extra-vars` or `-e` flags on the command line will **always** override all other definitions.
+
+#### 1 Default values
+ are built-in fallback values
+#### 2 Inventory variables
+ are variables defined in your inventory
+#### 3 Playbook variables
+ are variables defined directly inside a playbook
+#### 4 Role defaults
+are the default variables defined inside a reusable role's defaults/main.yml file. These are safe, low-priority defaults intended to be overridden.
+#### 5 Role vars
+are variables defined inside a role's vars/main.yml file. Unlike defaults/, these cannot be easily overridden by the user.
+
+#### 6 Block variables
+are variables defined within a block: directive that apply only to the tasks inside that specific block.
+
+like 
+```yml
+---
+tasks:
+  - block:
+      - name: Task 1
+        command: echo "{{ timeout }}"
+      - name: Task 2
+        command: check_timeout
+      vars:
+        timeout: 85  # Only applies to tasks inside this block
+    - name: Task 3 outside block
+      command: echo "{{ timeout }}"  # Uses previous value (e.g., 75)
+```
+#### 7 Task variables
+defined directly inside an individual task using the vars: keyword, applying only to that specific task.
+
+like 
+```yml
+---
+tasks:
+  - name: Special deployment
+    command: deploy_app
+    vars:
+      timeout: 95  # Only affects this one task
+---
+```
+
+#### 8 Include variables
+Variables loaded dynamically at runtime from external files using ```include_vars:``` or ```vars_files:```.
+
+like
+```yml
+---
+tasks:
+  - name: Load environment-specific vars
+    include_vars: "{{ env }}_config.yml"
+    # If env=production, loads production_config.yml
+    # which might contain: timeout: 110
+```
+#### 9. Set_fact
+Variables created or modified during playbook execution using the ```set_fact``` module. These persist for the entire playbook run.
+
+like
+```yml
+---
+tasks:
+  - name: Calculate dynamic timeout
+    set_fact:
+      timeout: "{{ 120 + 10 }}"  # Results in 130
+  
+  - name: Use calculated value
+    command: deploy --timeout {{ timeout }}
+```
+#### 10. Extra vars
+Variables passed directly from the command line using the -e or --extra-vars flag. These are the highest precedence—nothing overrides them.
+
+```yml
+---
+# Command line execution
+ansible-playbook deploy.yml -e "timeout=999"
+```
+
+
