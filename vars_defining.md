@@ -191,3 +191,64 @@ ansible-playbook deploy.yml -e "timeout=999"
 ```
 
 
+# Defining variables and using it in jinja2 template
+Here we did print hello world with ansible
+first we defined the ```greeting_message```
+then we created a file with ```ansible.builtin.copy```
+and copies some ```jinja2``` files in it 
+then with the ```ansible.builtin.template``` , we rendered it
+Also we tried to get logs so we did cat with the ```ansible.builtin.shell```
+registered the output into a variable , then did print it with ```ansible.builtin.debug```
+
+
+```yml
+---
+- name: Simple template demo
+  hosts: localhost
+  
+  vars:
+    greeting_message: "Hello World from Ansible!"
+    
+  tasks:
+    - name: Create template file
+      ansible.builtin.copy:
+        dest: ./hello.template.j2
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Template Demo</title>
+          </head>
+          <body>
+              <h1>{{ greeting_message }}</h1>
+              <p>This template was rendered at: {{ ansible_date_time.time }}</p>
+          </body>
+          </html>
+      delegate_to: localhost
+      run_once: true
+    - name: Render HTML template to remote server
+      ansible.builtin.template:
+        src: ./hello.template.j2    
+        dest: /tmp/hello.html       
+        mode: '0644'                
+      register: template_result
+
+    - name: Show template registration output
+      ansible.builtin.debug:
+        var: template_result
+
+    - name: Read the rendered HTML file
+      ansible.builtin.shell:
+        cmd: cat /tmp/hello.html
+      register: cat_result
+
+    - name: Show rendered HTML content
+      ansible.builtin.debug:
+        msg: "{{ cat_result.stdout }}"
+
+    - name: Extract and show greeting
+      ansible.builtin.debug:
+        msg: "The greeting is: {{ greeting_message }}"
+```
+
+‌Best practice is too do create our dns , apt rippo , nginx , redis and etc configs , into jinja2 and do change them with that
