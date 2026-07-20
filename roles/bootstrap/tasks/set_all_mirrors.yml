@@ -24,7 +24,7 @@
     mode: '0644'
     force: yes
   vars:
-    is_ubuntu: "{{ ansible_distribution == 'Ubuntu' }}"
+    is_ubuntu: "{{ ansible_facts['distribution'] == 'Ubuntu' }}"
     docker_gpg_url: "{{ docker_gpg_url_ubuntu if is_ubuntu else docker_gpg_url_debian }}"
 
 - name: Find all existing files in /etc/apt/sources.list.d/
@@ -38,7 +38,7 @@
     state: absent
   loop: "{{ existing_sources.files }}"
   when: 
-    - item.path | basename != (ansible_distribution | lower ~ '.sources')
+    - item.path | basename != (ansible_facts['distribution'] | lower ~ '.sources')
     - item.path | basename != 'docker.sources'
 
 - name: Configure OS mirror (deb822 format)
@@ -53,19 +53,19 @@
 
       Types: deb
       URIs: {{ mirror_sec_uri }}
-      Suites: {{ ansible_distribution_release }}-security
+      Suites: {{ ansible_facts['distribution_release'] }}-security
       Components: {{ os_components }}
       Signed-By: {{ keyring_path }}
     mode: '0644'
     owner: root
     group: root
   vars:
-    is_ubuntu: "{{ ansible_distribution == 'Ubuntu' }}"
-    os_name: "{{ ansible_distribution | lower }}"
+    is_ubuntu: "{{ ansible_facts['distribution'] == 'Ubuntu' }}"
+    os_name: "{{ ansible_facts['distribution'] | lower }}"
     mirror_uri: "{{ ubuntu_mirror_uri if is_ubuntu else debian_mirror_uri }}"
     mirror_sec_uri: "{{ ubuntu_sec_mirror_uri if is_ubuntu else debian_sec_mirror_uri }}"
     os_components: "{{ ubuntu_components if is_ubuntu else debian_components }}"
-    suites_main: "{{ ansible_distribution_release }} {{ ansible_distribution_release }}-updates {{ ansible_distribution_release ~ '-backports' if is_ubuntu else '' }}"
+    suites_main: "{{ ansible_facts['distribution_release'] }} {{ ansible_facts['distribution_release'] }}-updates {{ ansible_facts['distribution_release'] ~ '-backports' if is_ubuntu else '' }}"
     keyring_path: "/usr/share/keyrings/{{ os_name }}-archive-keyring.gpg"
   notify: update apt cache
 
@@ -76,13 +76,13 @@
       Types: deb
       Architectures: amd64
       URIs: {{ docker_mirror_uri }}
-      Suites: {{ ansible_distribution_release }}
+      Suites: {{ ansible_facts['distribution_release'] }}
       Components: stable
       Signed-By: /etc/apt/keyrings/docker.asc
     mode: '0644'
     owner: root
     group: root
   vars:
-    is_ubuntu: "{{ ansible_distribution == 'Ubuntu' }}"
+    is_ubuntu: "{{ ansible_facts['distribution'] == 'Ubuntu' }}"
     docker_mirror_uri: "{{ docker_repo_url_ubuntu if is_ubuntu else 'http://' ~ docker_repo_url_debian }}"
   notify: update apt cache

@@ -1,0 +1,23 @@
+---
+- name: Include DNS update tasks
+  ansible.builtin.include_tasks: dns_update.yml
+  tags:
+    - dns
+
+- name: Include all mirrors tasks
+  ansible.builtin.include_tasks: set_all_mirrors.yml
+  tags:
+    - mirrors
+
+
+
+- name: Include firewall tasks
+  ansible.builtin.include_tasks: disable_legacy_firewalls.yml
+  tags:
+    - firewall
+
+- name: Include Docker installation tasks
+  ansible.builtin.include_tasks: install_docker.yml
+  tags:
+    - docker
+

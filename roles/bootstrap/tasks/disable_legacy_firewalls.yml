@@ -1,0 +1,39 @@
+---
+# playbooks/tasks/disable_legacy_firewalls.yml
+
+- name: Purge competing legacy firewall packages
+  ansible.builtin.apt:
+    name:
+      - ufw
+    state: absent
+    purge: yes
+
+- name: Unmask iptables services to allow clean installation
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    masked: false
+  loop:
+    - iptables
+    - netfilter-persistent
+  ignore_errors: true
+
+- name: Install core firewall packages
+  ansible.builtin.apt:
+    name:
+      - iptables  # Kept strictly as a translation layer for Docker
+      - nftables  # The active routing engine
+    state: present
+
+- name: Stop and mask consumer UFW service
+  ansible.builtin.systemd:
+    name: ufw
+    state: stopped
+    enabled: false
+    masked: true
+  ignore_errors: true
+
+- name: Ensure native nftables service is enabled and started
+  ansible.builtin.systemd:
+    name: nftables
+    state: started
+    enabled: yes

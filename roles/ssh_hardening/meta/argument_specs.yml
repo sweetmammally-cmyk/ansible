@@ -5,7 +5,7 @@ argument_specs:
     version_added: 8.8.0
     options:
       network_ipv6_enable:
-        default: true
+        default: false
         type: bool
         description: '`false` if IPv6 is not needed. `ssh_listen_to` must also be
           set to listen to IPv6 addresses (for example `[::]`).'

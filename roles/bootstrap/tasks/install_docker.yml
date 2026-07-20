@@ -10,8 +10,7 @@
     dest: /etc/docker/daemon.json
     content: |
       {
-        "registry-mirrors": ["{{ docker_registry_mirror }}"],
-        "iptables": false
+        "registry-mirrors": ["{{ docker_registry_mirror }}"]
       }
     mode: '0644'
 

@@ -1,0 +1,16 @@
+---
+  - name: restart systemd-resolved
+    ansible.builtin.service:
+      name: systemd-resolved
+      state: restarted
+      enabled: yes
+
+  - name: update apt cache
+    ansible.builtin.apt:
+      update_cache: yes
+    when: ansible_os_family == "Debian"
+
+  - name: restart docker
+    ansible.builtin.service:
+      name: docker
+      state: restarted
