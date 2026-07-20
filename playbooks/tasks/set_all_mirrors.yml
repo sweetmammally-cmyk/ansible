@@ -1,0 +1,88 @@
+---
+- name: Install repository prerequisites
+  ansible.builtin.apt:
+    name: ca-certificates
+    state: present
+    # Do not update cache here, in case legacy mirrors are currently broken
+
+- name: Blank legacy /etc/apt/sources.list with a comment
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list
+    content: "# This system uses deb822-format in /etc/apt/sources.list.d/\n"
+    mode: '0644'
+
+- name: Create directory for GPG keys
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Download Docker GPG key (ASCII armored)
+  ansible.builtin.get_url:
+    url: "{{ docker_gpg_url }}"
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+    force: yes
+  vars:
+    is_ubuntu: "{{ ansible_distribution == 'Ubuntu' }}"
+    docker_gpg_url: "{{ docker_gpg_url_ubuntu if is_ubuntu else docker_gpg_url_debian }}"
+
+- name: Find all existing files in /etc/apt/sources.list.d/
+  ansible.builtin.find:
+    paths: /etc/apt/sources.list.d/
+  register: existing_sources
+
+- name: Flush all legacy files in sources.list.d
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ existing_sources.files }}"
+  when: 
+    - item.path | basename != (ansible_distribution | lower ~ '.sources')
+    - item.path | basename != 'docker.sources'
+
+- name: Configure OS mirror (deb822 format)
+  ansible.builtin.copy:
+    dest: "/etc/apt/sources.list.d/{{ os_name }}.sources"
+    content: |
+      Types: deb
+      URIs: {{ mirror_uri }}
+      Suites: {{ suites_main | trim }}
+      Components: {{ os_components }}
+      Signed-By: {{ keyring_path }}
+
+      Types: deb
+      URIs: {{ mirror_sec_uri }}
+      Suites: {{ ansible_distribution_release }}-security
+      Components: {{ os_components }}
+      Signed-By: {{ keyring_path }}
+    mode: '0644'
+    owner: root
+    group: root
+  vars:
+    is_ubuntu: "{{ ansible_distribution == 'Ubuntu' }}"
+    os_name: "{{ ansible_distribution | lower }}"
+    mirror_uri: "{{ ubuntu_mirror_uri if is_ubuntu else debian_mirror_uri }}"
+    mirror_sec_uri: "{{ ubuntu_sec_mirror_uri if is_ubuntu else debian_sec_mirror_uri }}"
+    os_components: "{{ ubuntu_components if is_ubuntu else debian_components }}"
+    suites_main: "{{ ansible_distribution_release }} {{ ansible_distribution_release }}-updates {{ ansible_distribution_release ~ '-backports' if is_ubuntu else '' }}"
+    keyring_path: "/usr/share/keyrings/{{ os_name }}-archive-keyring.gpg"
+  notify: update apt cache
+
+- name: Configure Docker repository (deb822 format)
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/docker.sources
+    content: |
+      Types: deb
+      Architectures: amd64
+      URIs: {{ docker_mirror_uri }}
+      Suites: {{ ansible_distribution_release }}
+      Components: stable
+      Signed-By: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+    owner: root
+    group: root
+  vars:
+    is_ubuntu: "{{ ansible_distribution == 'Ubuntu' }}"
+    docker_mirror_uri: "{{ docker_repo_url_ubuntu if is_ubuntu else 'http://' ~ docker_repo_url_debian }}"
+  notify: update apt cache

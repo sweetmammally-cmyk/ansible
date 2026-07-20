@@ -1,0 +1,59 @@
+---
+- name: Blank legacy /etc/apt/sources.list with a comment
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list
+    content: "# This system uses deb822-format in /etc/apt/sources.list.d/\n"
+    mode: '0644'
+    owner: root
+    group: root
+
+- name: Find all existing files in /etc/apt/sources.list.d/
+  ansible.builtin.find:
+    paths: /etc/apt/sources.list.d/
+  register: existing_sources
+
+- name: Flush all legacy files in sources.list.d
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ existing_sources.files }}"
+  # Jinja Rule: Only delete the file if it is NOT our OS mirror AND NOT our docker mirror
+  when: 
+    - item.path | basename != (ansible_distribution | lower ~ '.sources')
+    - item.path | basename != 'docker.sources'
+
+    
+- name: Configure OS mirror (deb822 format)
+  ansible.builtin.copy:
+    dest: "/etc/apt/sources.list.d/{{ os_name }}.sources"
+    content: |
+      Types: deb
+      URIs: {{ mirror_uri }}
+      Suites: {{ suites_main | trim }}
+      Components: {{ os_components }}
+      Signed-By: {{ keyring_path }}
+
+      Types: deb
+      URIs: {{ mirror_sec_uri }}
+      Suites: {{ ansible_distribution_release }}-security
+      Components: {{ os_components }}
+      Signed-By: {{ keyring_path }}
+    mode: '0644'
+    owner: root
+    group: root
+  vars:
+    # Evaluate OS once to keep logic clean
+    is_ubuntu: "{{ ansible_distribution == 'Ubuntu' }}"
+    os_name: "{{ ansible_distribution | lower }}"
+    
+    # Map URIs and components based on the OS
+    mirror_uri: "{{ ubuntu_mirror_uri if is_ubuntu else debian_mirror_uri }}"
+    mirror_sec_uri: "{{ ubuntu_sec_mirror_uri if is_ubuntu else debian_sec_mirror_uri }}"
+    os_components: "{{ ubuntu_components if is_ubuntu else debian_components }}"
+    
+    # Ubuntu uses backports in the main URI; Debian keeps it separate or omits it for base setups
+    suites_main: "{{ ansible_distribution_release }} {{ ansible_distribution_release }}-updates {{ ansible_distribution_release ~ '-backports' if is_ubuntu else '' }}"
+    
+    # Dynamically point to the correct OS keyring
+    keyring_path: "/usr/share/keyrings/{{ os_name }}-archive-keyring.gpg"
+  notify: update apt cache

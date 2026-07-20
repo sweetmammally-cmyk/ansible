@@ -1,0 +1,20 @@
+---
+- name: Update-initramfs # noqa no-changed-when
+  ansible.builtin.command: update-initramfs -u
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+
+
+- name: Remount filesystems
+  ansible.posix.mount:
+    path: "{{ item }}"
+    state: remounted
+  loop: "{{ mountpoints_changed }}"
+
+- name: Restart journald
+  ansible.builtin.systemd:
+    name: systemd-journald.service
+    state: restarted

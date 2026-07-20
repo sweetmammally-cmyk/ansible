@@ -1,18 +1,17 @@
 ---
-
-#Updating DNS Servers
+# playbooks/tasks/dns_update.yml
 - name: Configure systemd-resolved with custom DNS
   ansible.builtin.copy:
     dest: /etc/systemd/resolved.conf
     content: |
       [Resolve]
-      DNS={{ new_dns_servers | join(' ') }}
+      DNS={{ dns_servers | join(' ') }}
       # Fallback to Google DNS if ours fail
-      FallbackDNS={{ new_FallbackDNS_servers | join(' ') }}
+      FallbackDNS={{ dns_fallback_servers | join(' ') }}
       # Don't act as DNS stub listener
       DNSStubListener=no
-    owner : root
-    group : root
+    owner: root
+    group: root
     mode: '0644'
     backup: yes
   notify: restart systemd-resolved

@@ -1,0 +1,50 @@
+---
+- name: Bootstrap and Harden Server
+  hosts: all
+  become: true
+
+  # 1. Variables to control the complex roles
+  vars:
+    os_security_manage_firewall: false 
+    os_env_extra_user_paths: ['/usr/bin/docker']
+
+  # 2. Pre-requisites and custom tasks (Executes BEFORE roles)
+  pre_tasks:
+    - name: Purge legacy firewalls (UFW/iptables)
+      ansible.builtin.import_tasks: playbooks/tasks/disable_legacy_firewalls.yml
+      tags: firewalls
+
+    - name: Updating DNS Servers
+      ansible.builtin.import_tasks: playbooks/tasks/dns_update.yml
+      tags: dns
+
+    - name: Set All OS and Docker Mirrors
+      ansible.builtin.import_tasks: playbooks/tasks/set_all_mirrors.yml
+      tags: mirrors
+
+    - name: Install docker
+      ansible.builtin.import_tasks: playbooks/tasks/install_docker.yml
+      tags: docker
+
+  # 3. Execute the production-ready hardening roles
+  roles:
+    - role: os_hardening
+    - role: ssh_hardening
+
+  # 4. Handlers triggered by the tasks above
+  handlers:
+    - name: restart systemd-resolved
+      ansible.builtin.service:
+        name: systemd-resolved
+        state: restarted
+        enabled: yes
+
+    - name: update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: restart docker
+      ansible.builtin.service:
+        name: docker
+        state: restarted
