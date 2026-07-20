@@ -16,11 +16,11 @@ argument_specs:
         default: /etc/ssh/sshd_config
         description: path of the ssh server configuration file, e.g. `/etc/ssh/sshd_config.d/custom.conf`.
       ssh_server_ports:
-        default: [{{ ansible_port }}]
+        default:  "{{ ansible_port }}"
         type: list
         description: ports on which ssh-server should listen.
       ssh_client_port:
-        default: {{ ansible_port }}
+        default: "{{ ansible_port }}"
         description: Specifies the port number to connect on the remote host.
       ssh_listen_to:
         default: "{{ ['127.0.0.1', bastion_ip] if server_region == 'private' else ['0.0.0.0'] }}"
