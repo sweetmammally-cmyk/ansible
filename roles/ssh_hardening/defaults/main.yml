@@ -35,7 +35,7 @@ ssh_server_ports: ["{{ ansible_port }}"] # sshd
 
 # one or more ip addresses, to which ssh-server should listen to.
 # Set the listener dynamically based on the region
-ssh_listen_to: "{{ ['127.0.0.1', bastion_ip] if server_region == 'private' else ['0.0.0.0'] }}"
+ssh_listen_to: ['0.0.0.0']
 
 # Host RSA key size in bits
 ssh_host_rsa_key_size: 4096 # sshd

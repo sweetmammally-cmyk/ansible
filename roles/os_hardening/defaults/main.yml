@@ -171,7 +171,7 @@ sysctl_config:
   # Setting the flag to 0 ensures that a system with multiple interfaces (for example, a hard
   # proxy), will never be able to forward packets, and therefore, never serve as a router.
   # | sysctl-01 | sysctl-19
-  net.ipv4.ip_forward: 1
+  net.ipv4.ip_forward: 0
   net.ipv6.conf.all.forwarding: 0
 
   # Enable RFC-recommended source validation feature.

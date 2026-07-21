@@ -30,12 +30,3 @@
         | combine(sysctl_overwrite | default({})) }}"
       when: item.key not in sysctl_unsupported_entries | default()
 
-- name: Apply ufw defaults
-  ansible.builtin.template:
-    src: etc/default/ufw.j2
-    dest: /etc/default/ufw
-    mode: "0644"
-  when:
-    - ufw_manage_defaults
-    - ansible_facts.os_family == 'Debian'
-  tags: ufw

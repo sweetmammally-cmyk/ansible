@@ -1,39 +1,58 @@
 ---
 # playbooks/tasks/disable_legacy_firewalls.yml
 
-- name: Purge competing legacy firewall packages
+- name: Purge UFW completely
   ansible.builtin.apt:
-    name:
-      - ufw
-    state: absent
-    purge: yes
-
-- name: Unmask iptables services to allow clean installation
-  ansible.builtin.systemd:
-    name: "{{ item }}"
-    masked: false
-  loop:
-    - iptables
-    - netfilter-persistent
-  ignore_errors: true
-
-- name: Install core firewall packages
-  ansible.builtin.apt:
-    name:
-      - iptables  # Kept strictly as a translation layer for Docker
-      - nftables  # The active routing engine
-    state: present
-
-- name: Stop and mask consumer UFW service
-  ansible.builtin.systemd:
     name: ufw
-    state: stopped
-    enabled: false
-    masked: true
-  ignore_errors: true
+    state: absent
+    purge: true
+    autoremove: true
 
-- name: Ensure native nftables service is enabled and started
+# This task must run to populate ansible_facts.services
+- name: Gather service facts
+  ansible.builtin.service_facts:
+
+
+- name: Stop and disable nftables service
   ansible.builtin.systemd:
     name: nftables
+    state: stopped
+    enabled: false
+  when: "'nftables.service' in ansible_facts.services"
+
+
+
+- name: Install iptables packages (iptables + persistence)
+  ansible.builtin.apt:
+    name:
+      - iptables
+      - iptables-persistent
+    state: present
+    update_cache: yes
+
+- name: Unmask and ensure netfilter-persistent service
+  ansible.builtin.systemd:
+    name: netfilter-persistent
+    enabled: true
+    masked: false
+
+- name: Enable netfilter-persistent
+  ansible.builtin.systemd:
+    name: netfilter-persistent
+    enabled: true
     state: started
-    enabled: yes
+    masked: false
+
+- name: Flush any existing iptables rules (clean start)
+  ansible.builtin.iptables:
+    flush: true
+    table: "{{ item.table | default('filter') }}"
+    chain: "{{ item.chain }}"
+  loop:
+    - { chain: INPUT }
+    - { chain: FORWARD }
+    - { chain: OUTPUT }
+    - { chain: PREROUTING, table: nat }
+    - { chain: POSTROUTING, table: nat }
+    - { chain: PREROUTING, table: mangle }
+    - { chain: POSTROUTING, table: mangle }

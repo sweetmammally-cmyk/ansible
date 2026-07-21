@@ -3,15 +3,17 @@
   hosts: all
   become: true
 
-  # 1. Variables to control the complex roles
   vars:
-    os_security_manage_firewall: false 
-    os_env_extra_user_paths: ['/usr/bin/docker']
+    os_security_manage_firewall: false
+    os_env_extra_user_paths:
+      - /usr/bin/docker
 
-
-  # 2. Execute the production-ready hardening roles
   roles:
     - role: bootstrap
-    - role: os_hardening
-    - role: ssh_hardening
+      tags: bootstrap_role
 
+    - role: os_hardening
+      tags: os_hardening_role
+
+    - role: ssh_hardening
+      tags: ssh_hardening_role

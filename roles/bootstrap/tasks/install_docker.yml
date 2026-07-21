@@ -1,18 +1,51 @@
 ---
+- name: Gather installed package facts
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Set Docker installed fact
+  ansible.builtin.set_fact:
+    docker_installed: >-
+      {{
+        'docker-ce' in ansible_facts.packages or
+        'docker.io' in ansible_facts.packages
+      }}
+
+- name: Set Docker version fact
+  ansible.builtin.set_fact:
+    docker_version: >-
+      {{
+        ansible_facts.packages['docker-ce'][0].version
+        if 'docker-ce' in ansible_facts.packages
+        else ansible_facts.packages['docker.io'][0].version
+      }}
+  when: docker_installed
+
+- name: Docker already installed
+  ansible.builtin.debug:
+    msg: >-
+      [{{ inventory_hostname }}]
+      Docker is already installed.
+      Package: {{ 'docker-ce' if 'docker-ce' in ansible_facts.packages else 'docker.io' }}
+      Version: {{ docker_version }}
+  when: docker_installed
+
 - name: Ensure /etc/docker directory exists before installation
   ansible.builtin.file:
     path: /etc/docker
     state: directory
-    mode: '0755'
+    mode: "0755"
+  when: not docker_installed
 
-- name: Configure Docker daemon settings (Mirrors and iptables bypass)
+- name: Configure Docker daemon settings
   ansible.builtin.copy:
     dest: /etc/docker/daemon.json
     content: |
       {
         "registry-mirrors": ["{{ docker_registry_mirror }}"]
       }
-    mode: '0644'
+    mode: "0644"
+  when: not docker_installed
 
 - name: Install Docker components
   ansible.builtin.apt:
@@ -23,4 +56,5 @@
       - docker-buildx-plugin
       - docker-compose-plugin
     state: present
-    update_cache: yes
+    update_cache: true
+  when: not docker_installed

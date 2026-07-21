@@ -23,11 +23,11 @@ argument_specs:
         default: "{{ ansible_port }}"
         description: Specifies the port number to connect on the remote host.
       ssh_listen_to:
-        default: "{{ ['127.0.0.1', bastion_ip] if server_region == 'private' else ['0.0.0.0'] }}"
+        default: ['0.0.0.0']
         type: list
-        description: one or more ip addresses, to which ssh-server should listen to.
-          Default is all IPv4 addresses, but should be configured to specific addresses
-          for security reasons
+        description: One or more local IP addresses on which the SSH server listens.
+          Defaults to all IPv4 interfaces (0.0.0.0). Use firewall rules to
+          restrict which remote hosts may connect.
       ssh_host_key_files:
         type: list
         description: Host keys for sshd. If empty ['/etc/ssh/ssh_host_rsa_key', '/etc/ssh/ssh_host_ecdsa_key',
