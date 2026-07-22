@@ -42,17 +42,3 @@
     enabled: true
     state: started
     masked: false
-
-- name: Flush any existing iptables rules (clean start)
-  ansible.builtin.iptables:
-    flush: true
-    table: "{{ item.table | default('filter') }}"
-    chain: "{{ item.chain }}"
-  loop:
-    - { chain: INPUT }
-    - { chain: FORWARD }
-    - { chain: OUTPUT }
-    - { chain: PREROUTING, table: nat }
-    - { chain: POSTROUTING, table: nat }
-    - { chain: PREROUTING, table: mangle }
-    - { chain: POSTROUTING, table: mangle }
